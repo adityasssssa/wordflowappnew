@@ -507,7 +507,8 @@ const styles = StyleSheet.create({
     fontSize: 40,
     color: "#000",
     textAlign: "center",
-    marginTop: 20
+    marginTop: 20,
+    flexWrap: "wrap"
     // marginBottom: 0,
   },
   sentenceContainer: {
