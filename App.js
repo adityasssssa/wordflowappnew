@@ -65,7 +65,7 @@ function HomeScreen({ navigation }) {
         style={styles.button}
         onPress={() => navigation.navigate('StudySquad')}
       >
-        <Text style={styles.buttonText}>Study Squad</Text>
+        <Text style={styles.buttonText}>Homework Reader</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.button}
