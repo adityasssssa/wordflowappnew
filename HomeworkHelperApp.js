@@ -1,25 +1,69 @@
 // HomeworkHelperApp.js
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert, Image, ScrollView } from 'react-native';
-import * as Font from 'expo-font';
+import { 
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  SafeAreaView
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { StackActions } from '@react-navigation/native';
+import * as Font from 'expo-font';
 
-function OCRScreen({ navigation }) {
+export default function HomeworkHelperApp({ navigation }) {
   const [fontsLoaded, setFontsLoaded] = useState(false);
-  const [ocrText, setOcrText] = useState('');
-  const [imageUri, setImageUri] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [ocrText, setOcrText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    async function loadFont() {
-      await Font.loadAsync({
-        'OpenDyslexic': require('./assets/fonts/OpenDyslexic-Regular.otf'),
-      });
-      setFontsLoaded(true);
-    }
-    loadFont();
+    (async () => {
+      try {
+        await Font.loadAsync({
+          'OpenDyslexic': require('./assets/fonts/OpenDyslexic-Regular.otf'),
+        });
+        setFontsLoaded(true);
+      } catch (e) {
+        console.warn("Font load error", e);
+      }
+    })();
   }, []);
+
+  // Simulate a loading screen for 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isLoaded) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#72C99F" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  const HeaderBar = () => (
+    <View style={styles.headerBar}>
+      <TouchableOpacity onPress={() => navigation.dispatch(StackActions.popToTop())}>
+        <Text style={styles.backText}>Back</Text>
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>Wordflow</Text>
+      <View style={{ width: 60 }} />
+    </View>
+  );
+
+  const StudySquadBar = () => (
+    <View style={styles.studyBar}>
+      <Text style={styles.studyBarText}>Study Squad</Text>
+    </View>
+  );
 
   const captureAndProcess = async () => {
     setIsProcessing(true);
@@ -34,7 +78,6 @@ function OCRScreen({ navigation }) {
           Alert.alert("Error", "No valid image captured.");
           return;
         }
-        setImageUri(asset.uri);
         let formData = new FormData();
         formData.append("apikey", "K85325449388957");
         formData.append("language", "eng");
@@ -56,7 +99,6 @@ function OCRScreen({ navigation }) {
           console.error("Failed to parse JSON:", e);
           json = { error: responseText };
         }
-        
         let recognizedText = "";
         if (json && json.ParsedResults && json.ParsedResults.length > 0) {
           recognizedText = json.ParsedResults[0].ParsedText;
@@ -75,82 +117,122 @@ function OCRScreen({ navigation }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Homework Helper</Text>
-      <TouchableOpacity style={styles.button} onPress={captureAndProcess}>
-        <Text style={styles.buttonText}>Capture</Text>
-      </TouchableOpacity>
-      {imageUri && (
-        <Image source={{ uri: imageUri }} style={styles.imagePreview} />
-      )}
-      {isProcessing ? (
-        <ActivityIndicator size="large" />
-      ) : (
-        ocrText !== '' && (
-          <View style={styles.textContainer}>
-            <Text style={[styles.ocrText, fontsLoaded && { fontFamily: 'OpenDyslexic' }]}>
+    <SafeAreaView style={styles.container}>
+      <HeaderBar />
+      <StudySquadBar />
+      <View style={styles.mainContent}>
+        <Text style={styles.helpText}>Need help reading your homework? Click below!</Text>
+        <TouchableOpacity style={styles.scannerButton} onPress={captureAndProcess}>
+          <Text style={styles.scannerButtonText}>Open homework scanner</Text>
+        </TouchableOpacity>
+        {isProcessing && (
+          <View style={styles.processingContainer}>
+            <ActivityIndicator size="large" color="#000" />
+            <Text style={styles.processingText}>Processing...</Text>
+          </View>
+        )}
+        {ocrText !== "" && (
+          <View style={styles.resultContainer}>
+            <Text style={[styles.resultText, fontsLoaded && { fontFamily: 'OpenDyslexic' }]}>
               {ocrText}
             </Text>
           </View>
-        )
-      )}
-      {/* Updated Back to Home button */}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => {
-          navigation.dispatch(StackActions.popToTop());
-        }}
-      >
-        <Text style={styles.buttonText}>Back to Home</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
-export default function HomeworkHelperApp({ navigation }) {  
-  // Accept navigation prop from the wrapper and pass it to OCRScreen
-  return <OCRScreen navigation={navigation} />;
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: "#fff",
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#B3D8FF",
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
   },
-  title: {
-    fontSize: 28,
-    marginBottom: 20,
+  loadingText: {
+    fontSize: 16,
+    color: "#72C99F",
+    marginTop: 10,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#B3D8FF",
+    padding: 20,
+    paddingTop: 60,
+  },
+  headerBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E5C4FF",
+    justifyContent: "space-between",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  backText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#72C99F",
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#FDEB56",
+  },
+  studyBar: {
+    backgroundColor: "#E5C4FF",
+    alignItems: "center",
+    paddingVertical: 8,
+    marginBottom: 10,
+  },
+  studyBarText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#FDEB56",
+  },
+  mainContent: {
+    flex: 1,
+    alignItems: "center",
+    padding: 10,
+    justifyContent: "center",
+  },
+  helpText: {
+    fontSize: 16,
+    color: "#000",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  scannerButton: {
+    backgroundColor: "#72C99F",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    marginBottom: 15,
+  },
+  scannerButtonText: {
+    color: "#fff",
+    fontSize: 16,
     fontWeight: "bold",
   },
-  button: {
-    backgroundColor: "#4A90E2",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 10,
+  processingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
+  processingText: {
+    fontSize: 14,
+    marginLeft: 8,
   },
-  imagePreview: {
-    width: 250,
-    height: 250,
-    marginVertical: 10,
-    borderRadius: 8,
+  resultContainer: {
+    marginTop: 15,
+    backgroundColor: "#fff",
+    borderRadius: 6,
+    padding: 10,
+    width: "90%",
+    alignSelf: "center",
   },
-  textContainer: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 20,
-    marginVertical: 20,
-    width: "100%",
-  },
-  ocrText: {
-    fontSize: 18,
-    textAlign: "left",
+  resultText: {
+    fontSize: 14,
+    color: "#000",
   },
 });

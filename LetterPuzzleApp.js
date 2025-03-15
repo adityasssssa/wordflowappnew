@@ -1,13 +1,22 @@
 // LetterPuzzleApp.js
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  TouchableOpacity, 
+  Image, 
+  Alert, 
+  ScrollView,
+  ActivityIndicator,
+  SafeAreaView 
+} from 'react-native';
 import * as Font from 'expo-font';
 import { Audio } from 'expo-av';
 import { createStackNavigator } from '@react-navigation/stack';
 
 const Stack = createStackNavigator();
 
-// Define questions and letter mapping
 const questions = [
   { image: require('./assets/images/house.jpg'), audio: require('./assets/audio/house.mp3'), answer: "house" },
   { image: require('./assets/images/lamp.jpg'), audio: require('./assets/audio/lamp.mp3'), answer: "lamp" },
@@ -45,7 +54,7 @@ const shuffleArray = (array) => {
   return arr;
 };
 
-// Custom Header used in both screens
+// Custom Header with "Home" on the left and "Word Wizards" on the right
 const CustomHeader = ({ navigation }) => (
   <View style={styles.header}>
     <TouchableOpacity
@@ -65,7 +74,7 @@ function PuzzleScreen({ navigation }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const currentQuestion = questions[currentQuestionIndex];
   const targetWord = currentQuestion.answer;
-  const letters = targetWord.split(""); // target word letters
+  const letters = targetWord.split("");
   const [availableLetters, setAvailableLetters] = useState(shuffleArray(letters));
   const [dropZones, setDropZones] = useState(new Array(targetWord.length).fill(""));
   const [firstAttemptCorrect, setFirstAttemptCorrect] = useState(null);
@@ -223,7 +232,24 @@ function ScoreScreen({ route, navigation }) {
   );
 }
 
-export default function LetterPuzzleApp() {
+// Loading wrapper for LetterPuzzleApp: wait 3 seconds before showing Navigator.
+export default function LetterPuzzleAppWrapper({ navigation }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isLoaded) {
+    return (
+      <SafeAreaView style={styles.loadingFallbackContainer}>
+        <ActivityIndicator size="large" color="#72C99F" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Puzzle" component={PuzzleScreen} />
@@ -233,12 +259,9 @@ export default function LetterPuzzleApp() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollContainer: {
     flexGrow: 1,
     backgroundColor: "#B3D8FF",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
   },
   containerNoScroll: {
     flexGrow: 1,
@@ -246,6 +269,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     paddingTop: 40,
+  },
+  loadingFallbackContainer: {
+    flex: 1,
+    backgroundColor: "#B3D8FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#72C99F",
+    marginTop: 10,
   },
   header: {
     flexDirection: "row",
@@ -339,3 +373,5 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
 });
+
+export { LetterPuzzleAppWrapper as LetterPuzzleApp };
