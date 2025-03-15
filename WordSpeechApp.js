@@ -442,13 +442,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   middleSection: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    // flex: 3,
+    marginTop: 150,
+    marginBottom: 200,
+    // alignItems: "center",
+    // justifyContent: "center",
     paddingHorizontal: 20,
+
   },
   bottomSection: {
     alignItems: "center",
+    marginTop: 40,
     marginBottom: 20,
   },
   loadingFallbackContainer: {
@@ -459,17 +463,18 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontFamily: 'NerkoOne_400Regular',
-    fontSize: 32,
+    fontSize: 50,
     color: "#FDEB56", // bright yellow
     fontWeight: "bold",
     marginVertical: 10,
   },
   headerBar: {
+    marginTop: 20,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#E5C4FF",
     width: "95%",
-    paddingVertical: 10,
+    paddingVertical: 25,
     paddingHorizontal: 15,
     justifyContent: "space-between",
     borderRadius: 10,
@@ -480,8 +485,9 @@ const styles = StyleSheet.create({
     color: "#72C99F",
   },
   headerTitle: {
-    fontSize: 22,
-    color: "#FDEB56",
+    fontSize: 25,
+    alignItems: "center",
+    color: "white",
     fontWeight: "bold",
   },
   difficultyText: {
@@ -489,17 +495,20 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   readSentenceText: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: "bold",
     color: "#FDEB56",
     marginBottom: 20,
-    textAlign: "center",
+    marginTop: -60,
+    textAlign: "left",
+    marginLeft: 5
   },
   sentenceText: {
-    fontSize: 26,
+    fontSize: 40,
     color: "#000",
     textAlign: "center",
-    marginBottom: 20,
+    marginTop: 20
+    // marginBottom: 0,
   },
   sentenceContainer: {
     flexDirection: "row",
@@ -508,7 +517,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   word: {
-    fontSize: 26,
+    fontSize: 36,
     margin: 5,
   },
   correctWord: {
@@ -519,16 +528,17 @@ const styles = StyleSheet.create({
   },
   recordButton: {
     backgroundColor: "#72C99F",
-    paddingVertical: 15,
+    paddingVertical: 30,
     paddingHorizontal: 25,
-    borderRadius: 8,
-    minWidth: 200,
+    borderRadius: 13,
+    width: "80%",
+    // minWidth: 200,
     alignItems: "center",
-    marginBottom: 10,
+    // marginBottom: 0,
   },
   recordButtonText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 30,
     fontWeight: "bold",
   },
   checkingContainer: {

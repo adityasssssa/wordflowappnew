@@ -101,7 +101,7 @@ function createLoadingWrapper(AppComponent) {
       const timer = setTimeout(() => {
         clearInterval(interval);
         setIsLoading(false);
-      }, 3000); // total wait of 3 seconds
+      }, 1000); // total wait of 3 seconds
 
       return () => {
         clearInterval(interval);
