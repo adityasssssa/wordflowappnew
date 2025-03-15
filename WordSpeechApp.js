@@ -18,7 +18,7 @@ const REV_AI_ACCESS_TOKEN = "02Zmaws-lBJjwJTmw8_k5LxfNL-coIIgiDKstyFkuD7giZmCb8W
 
 const sentencesByDifficulty = {
   easy: [
-    "The brown horse jumps over the fence.",
+    // "The brown horse jumps over the fence.",
     "The sun is hot.",
     "She has a red hat."
   ],
