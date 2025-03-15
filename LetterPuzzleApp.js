@@ -1,0 +1,341 @@
+// LetterPuzzleApp.js
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
+import * as Font from 'expo-font';
+import { Audio } from 'expo-av';
+import { createStackNavigator } from '@react-navigation/stack';
+
+const Stack = createStackNavigator();
+
+// Define questions and letter mapping
+const questions = [
+  { image: require('./assets/images/house.jpg'), audio: require('./assets/audio/house.mp3'), answer: "house" },
+  { image: require('./assets/images/lamp.jpg'), audio: require('./assets/audio/lamp.mp3'), answer: "lamp" },
+  { image: require('./assets/images/water.jpg'), audio: require('./assets/audio/water.mp3'), answer: "water" },
+  { image: require('./assets/images/purse.jpg'), audio: require('./assets/audio/purse.mp3'), answer: "purse" },
+  { image: require('./assets/images/plant.jpg'), audio: require('./assets/audio/plant.mp3'), answer: "plant" },
+  { image: require('./assets/images/snow.jpg'), audio: require('./assets/audio/snow.mp3'), answer: "snow" },
+  { image: require('./assets/images/truck.jpg'), audio: require('./assets/audio/truck.mp3'), answer: "truck" },
+];
+
+const letterImageMapping = {
+  a: require('./assets/letters/a.jpg'),
+  c: require('./assets/letters/c.jpg'),
+  e: require('./assets/letters/e.jpg'),
+  h: require('./assets/letters/h.jpg'),
+  k: require('./assets/letters/k.jpg'),
+  l: require('./assets/letters/l.jpg'),
+  m: require('./assets/letters/m.jpg'),
+  n: require('./assets/letters/n.jpg'),
+  o: require('./assets/letters/o.jpg'),
+  p: require('./assets/letters/p.jpg'),
+  r: require('./assets/letters/r.jpg'),
+  s: require('./assets/letters/s.jpg'),
+  t: require('./assets/letters/t.jpg'),
+  u: require('./assets/letters/u.jpg'),
+  w: require('./assets/letters/w.jpg'),
+};
+
+const shuffleArray = (array) => {
+  let arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
+// Custom Header used in both screens
+const CustomHeader = ({ navigation }) => (
+  <View style={styles.header}>
+    <TouchableOpacity
+      onPress={() => {
+        if (navigation && navigation.navigate) {
+          navigation.navigate("Home");
+        }
+      }}
+    >
+      <Text style={styles.homeText}>Home</Text>
+    </TouchableOpacity>
+    <Text style={styles.moduleTitle}>Word Wizards</Text>
+  </View>
+);
+
+function PuzzleScreen({ navigation }) {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const currentQuestion = questions[currentQuestionIndex];
+  const targetWord = currentQuestion.answer;
+  const letters = targetWord.split(""); // target word letters
+  const [availableLetters, setAvailableLetters] = useState(shuffleArray(letters));
+  const [dropZones, setDropZones] = useState(new Array(targetWord.length).fill(""));
+  const [firstAttemptCorrect, setFirstAttemptCorrect] = useState(null);
+  const [firstAttemptScore, setFirstAttemptScore] = useState(0);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [sound, setSound] = useState(null);
+
+  useEffect(() => {
+    async function loadFont() {
+      await Font.loadAsync({
+        'OpenDyslexic': require('./assets/fonts/OpenDyslexic-Regular.otf'),
+      });
+    }
+    loadFont();
+  }, []);
+
+  useEffect(() => {
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      allowsRecordingIOS: false,
+      staysActiveInBackground: false,
+    });
+  }, []);
+
+  useEffect(() => {
+    playAudio();
+    resetPuzzle();
+    setFirstAttemptCorrect(null);
+  }, [currentQuestionIndex]);
+
+  const playAudio = async () => {
+    try {
+      if (sound) {
+        await sound.unloadAsync();
+      }
+      const { sound: newSound } = await Audio.Sound.createAsync(currentQuestion.audio);
+      setSound(newSound);
+      setAudioPlaying(true);
+      await newSound.playAsync();
+      newSound.setOnPlaybackStatusUpdate(status => {
+        if (status.didJustFinish) {
+          setAudioPlaying(false);
+        }
+      });
+    } catch (error) {
+      console.error("Audio playback error:", error);
+      Alert.alert("Audio Error", "Unable to play the audio.");
+    }
+  };
+
+  const handleTileTap = (letter) => {
+    const nextIndex = dropZones.findIndex(item => item === "");
+    if (nextIndex !== -1) {
+      const newDropZones = [...dropZones];
+      newDropZones[nextIndex] = letter;
+      setDropZones(newDropZones);
+      setAvailableLetters(availableLetters.filter(l => l !== letter));
+    }
+  };
+
+  const handleDropZoneTap = (index) => {
+    if (dropZones[index] !== "") {
+      const removedLetter = dropZones[index];
+      const newDropZones = [...dropZones];
+      newDropZones[index] = "";
+      setDropZones(newDropZones);
+      setAvailableLetters(shuffleArray([...availableLetters, removedLetter]));
+    }
+  };
+
+  const handleSubmit = () => {
+    const formedWord = dropZones.join("");
+    if (firstAttemptCorrect === null) {
+      if (formedWord === targetWord) {
+        const newScore = firstAttemptScore + 1;
+        setFirstAttemptCorrect(true);
+        setFirstAttemptScore(newScore);
+        Alert.alert("Correct", "Your answer is correct!", [
+          { text: "OK", onPress: () => nextQuestion(newScore) }
+        ]);
+      } else {
+        setFirstAttemptCorrect(false);
+        Alert.alert("Incorrect", "Your first attempt is incorrect. Please try again until you get it correct.");
+      }
+    } else {
+      if (formedWord === targetWord) {
+        Alert.alert("Correct", "Your answer is now correct, but your first attempt was marked incorrect.", [
+          { text: "OK", onPress: () => nextQuestion(firstAttemptScore) }
+        ]);
+      } else {
+        Alert.alert("Incorrect", "Your answer is incorrect. Please try again.");
+      }
+    }
+  };
+
+  const resetPuzzle = () => {
+    setAvailableLetters(shuffleArray(letters));
+    setDropZones(new Array(letters.length).fill(""));
+  };
+
+  const nextQuestion = (updatedScore) => {
+    const nextIndex = currentQuestionIndex + 1;
+    if (nextIndex < questions.length) {
+      setCurrentQuestionIndex(nextIndex);
+    } else {
+      navigation.navigate("Score", { correct: updatedScore, total: questions.length });
+    }
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.containerNoScroll}>
+      <CustomHeader navigation={navigation} />
+      <Image source={currentQuestion.image} style={styles.image} />
+      <TouchableOpacity style={styles.button} onPress={playAudio}>
+        <Text style={styles.buttonText}>{audioPlaying ? "Playing..." : "Play Again"}</Text>
+      </TouchableOpacity>
+      <Text style={styles.instruction}>
+        Tap a letter to automatically place it in the next available box.
+        Tap a filled box to remove its letter.
+      </Text>
+      <View style={styles.dropZoneContainer}>
+        {dropZones.map((letter, index) => (
+          <TouchableOpacity key={`dropzone-${index}`} style={styles.dropZone} onPress={() => handleDropZoneTap(index)}>
+            <Text style={styles.dropZoneText}>{letter ? letter.toUpperCase() : ""}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={styles.draggableContainer}>
+        {availableLetters.map((letter, index) => (
+          <TouchableOpacity key={`tile-${index}`} style={styles.draggable} onPress={() => handleTileTap(letter)}>
+            <Image source={letterImageMapping[letter]} style={styles.tileImage} />
+          </TouchableOpacity>
+        ))}
+      </View>
+      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Submit</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={resetPuzzle}>
+        <Text style={styles.buttonText}>Reset</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+
+function ScoreScreen({ route, navigation }) {
+  const { correct, total } = route.params;
+  const percentage = ((correct / total) * 100).toFixed(0);
+  return (
+    <View style={styles.container}>
+      <CustomHeader navigation={navigation} />
+      <Text style={styles.title}>Good Job!</Text>
+      <Text style={styles.scoreText}>Correct: {correct} out of {total}</Text>
+      <Text style={styles.scoreText}>Score: {percentage}%</Text>
+    </View>
+  );
+}
+
+export default function LetterPuzzleApp() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Puzzle" component={PuzzleScreen} />
+      <Stack.Screen name="Score" component={ScoreScreen} />
+    </Stack.Navigator>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    backgroundColor: "#B3D8FF",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  containerNoScroll: {
+    flexGrow: 1,
+    backgroundColor: "#B3D8FF",
+    alignItems: "center",
+    padding: 20,
+    paddingTop: 40,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 20,
+  },
+  homeText: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#72C99F",
+  },
+  moduleTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  title: {
+    fontSize: 28,
+    marginVertical: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  instruction: {
+    fontSize: 18,
+    marginVertical: 10,
+    textAlign: "center",
+  },
+  scoreText: {
+    fontSize: 22,
+    marginVertical: 5,
+  },
+  button: {
+    backgroundColor: "#72C99F",
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    marginVertical: 10,
+    minWidth: 200,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 20,
+  },
+  image: {
+    width: 250,
+    height: 250,
+    borderRadius: 8,
+    marginVertical: 10,
+  },
+  dropZoneContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginVertical: 20,
+  },
+  dropZone: {
+    width: 50,
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    marginHorizontal: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f0f0f0",
+  },
+  dropZoneText: {
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  draggableContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    marginVertical: 20,
+  },
+  draggable: {
+    width: 50,
+    height: 50,
+    margin: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 4,
+  },
+  tileImage: {
+    width: 50,
+    height: 50,
+    resizeMode: "contain",
+  },
+});
