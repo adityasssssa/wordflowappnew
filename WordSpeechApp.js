@@ -18,6 +18,7 @@ const REV_AI_ACCESS_TOKEN = "02Zmaws-lBJjwJTmw8_k5LxfNL-coIIgiDKstyFkuD7giZmCb8W
 
 const sentencesByDifficulty = {
   easy: [
+    "The brown horse jumps over the fence.",
     "The sun is hot.",
     "She has a red hat."
   ],
@@ -442,9 +443,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   middleSection: {
-    // flex: 3,
+    flex: 1,
     marginTop: 150,
-    marginBottom: 200,
+    // marginBottom: 100,
     // alignItems: "center",
     // justifyContent: "center",
     paddingHorizontal: 20,
@@ -504,11 +505,12 @@ const styles = StyleSheet.create({
     marginLeft: 5
   },
   sentenceText: {
-    fontSize: 40,
+    fontSize: 30,
     color: "#000",
-    textAlign: "center",
+    textAlign: "left",
     marginTop: 20,
-    flexWrap: "wrap"
+    overflow: "visible"
+    // flexWrap: ""
     // marginBottom: 0,
   },
   sentenceContainer: {
@@ -530,6 +532,7 @@ const styles = StyleSheet.create({
   recordButton: {
     backgroundColor: "#72C99F",
     paddingVertical: 30,
+    marginBottom: 50,
     paddingHorizontal: 25,
     borderRadius: 13,
     width: "80%",
