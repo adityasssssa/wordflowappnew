@@ -1,4 +1,3 @@
-// HomeworkHelperApp.js
 import React, { useEffect, useState } from 'react';
 import { 
   StyleSheet,
@@ -19,6 +18,7 @@ export default function HomeworkHelperApp({ navigation }) {
   const [ocrText, setOcrText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Load custom font
   useEffect(() => {
     (async () => {
       try {
@@ -32,11 +32,21 @@ export default function HomeworkHelperApp({ navigation }) {
     })();
   }, []);
 
+  // Request camera permissions
+  useEffect(() => {
+    (async () => {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Camera permission is required to take photos.');
+      }
+    })();
+  }, []);
+
   // Simulate a loading screen for 3 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
-    }, 1500);
+    }, 500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -68,16 +78,22 @@ export default function HomeworkHelperApp({ navigation }) {
   const captureAndProcess = async () => {
     setIsProcessing(true);
     try {
+      // Launch the camera
       let result = await ImagePicker.launchCameraAsync({
         base64: false,
         quality: 0.5,
       });
+
+      // Check if the user canceled the action
       if (!result.canceled) {
         const asset = result.assets && result.assets[0];
         if (!asset || !asset.uri) {
           Alert.alert("Error", "No valid image captured.");
+          setIsProcessing(false);
           return;
         }
+        
+        // Build form data
         let formData = new FormData();
         formData.append("apikey", "K85325449388957");
         formData.append("language", "eng");
@@ -87,18 +103,12 @@ export default function HomeworkHelperApp({ navigation }) {
           type: "image/jpeg",
         });
 
+        // Send image to OCR API
         const response = await fetch("https://api.ocr.space/parse/image", {
           method: "POST",
           body: formData,
         });
-        const responseText = await response.text();
-        let json;
-        try {
-          json = JSON.parse(responseText);
-        } catch (e) {
-          console.error("Failed to parse JSON:", e);
-          json = { error: responseText };
-        }
+        const json = await response.json();
         let recognizedText = "";
         if (json && json.ParsedResults && json.ParsedResults.length > 0) {
           recognizedText = json.ParsedResults[0].ParsedText;
