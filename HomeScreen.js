@@ -59,7 +59,7 @@ export default function HomeScreen({ navigation }) {
   if (!fontsLoaded) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#72C99F" />
+        <ActivityIndicator size="large" color="white" />
       </SafeAreaView>
     );
   }
@@ -136,7 +136,7 @@ export default function HomeScreen({ navigation }) {
             style={styles.appIcon}
             resizeMode="contain"
           />
-          <Text style={styles.appLabel}>Study squad</Text>
+          <Text style={styles.appLabel}>Homework Reader</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 

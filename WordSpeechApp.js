@@ -417,7 +417,7 @@ export default function WordSpeechApp({ navigation }) {
   if (!fontsLoaded) {
     return (
       <SafeAreaView style={styles.loadingFallbackContainer}>
-        <ActivityIndicator size="large" color="#72C99F" />
+        <ActivityIndicator size="large" color="white" />
       </SafeAreaView>
     );
   }

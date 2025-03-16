@@ -43,7 +43,7 @@ export default function HomeworkHelperApp({ navigation }) {
   if (!isLoaded) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#72C99F" />
+        <ActivityIndicator size="large" color="white" />
         <Text style={styles.loadingText}>Loading...</Text>
       </SafeAreaView>
     );
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: "#72C99F",
+    color: "white",
     marginTop: 10,
   },
   container: {
