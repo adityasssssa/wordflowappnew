@@ -63,7 +63,7 @@ export default function App() {
         {/* Wordflow logo using Nerko One */}
         <Text style={styles.splashTitle}>Wordflow</Text>
         {/* Subtitle */}
-        <Text style={styles.splashSubtitle}>Dyslexia is your superpower</Text>
+        <Text style={styles.splashSubtitle}>Dyslexia is your superpower!</Text>
         {/* Larger flowers image */}
         <Image
           source={require('./assets/logos/flowers.png')}

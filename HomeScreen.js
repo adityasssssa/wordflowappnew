@@ -115,7 +115,7 @@ export default function HomeScreen({ navigation }) {
 
         <TouchableOpacity 
           style={[styles.appBox, { backgroundColor: "#D7EEFF" }]}
-          onPress={() => navigation.navigate("LetterPuzzle")}
+          onPress={() => console.log("word wizards pressed")}
         >
           <Image
             source={require('./assets/logos/crayon.png')}
@@ -142,7 +142,8 @@ export default function HomeScreen({ navigation }) {
         <TouchableOpacity 
           style={[styles.appBox, { backgroundColor: "#D5F4E5" }]}
           onPress={() => {
-            console.warn("Alphabet Arcade button pressed, but no action is defined.");
+            // console.warn("Alphabet Arcade button pressed, but no action is defined.");
+            navigation.push("LetterPuzzle")
           }}
         >
           <Image
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: "NerkoOne_400Regular",
-    fontSize: 32,
+    fontSize: 50,
     color: "#FDEB56",
     marginTop: 10,
     marginBottom: 15,
@@ -232,12 +233,12 @@ const styles = StyleSheet.create({
   },
   empowerText: {
     fontFamily: "NerkoOne_400Regular",
-    fontSize: 22,
+    fontSize: 33,
     color: "#FDEB56",
     marginTop: 10,
   },
   quoteText: {
-    fontSize: 12,
+    fontSize: 16,
     color: "#000",
     marginTop: 5,
     textAlign: "center",

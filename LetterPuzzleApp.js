@@ -14,7 +14,7 @@ import {
 import * as Font from 'expo-font';
 import { Audio } from 'expo-av';
 import { createStackNavigator } from '@react-navigation/stack';
-
+import Ionicons from '@expo/vector-icons/Ionicons';
 const Stack = createStackNavigator();
 
 const questions = [
@@ -60,13 +60,14 @@ const CustomHeader = ({ navigation }) => (
     <TouchableOpacity
       onPress={() => {
         if (navigation && navigation.navigate) {
-          navigation.navigate("Home");
+          navigation.goBack();
         }
       }}
     >
-      <Text style={styles.homeText}>Home</Text>
+      {/* <Text style={styles.homeText}>Go to Home</Text> */}
+      <Ionicons name="arrow-back-circle-outline" size={38} color="grey" />
     </TouchableOpacity>
-    <Text style={styles.moduleTitle}>Word Wizards</Text>
+    <Text style={styles.moduleTitle}>Alphabet Arcade!</Text>
   </View>
 );
 
@@ -188,7 +189,7 @@ function PuzzleScreen({ navigation }) {
     <ScrollView contentContainerStyle={styles.containerNoScroll}>
       <CustomHeader navigation={navigation} />
       <Image source={currentQuestion.image} style={styles.image} />
-      <TouchableOpacity style={styles.button} onPress={playAudio}>
+      <TouchableOpacity style={[styles.button, {backgroundColor: "grey", borderRadius: 30}]} onPress={playAudio}>
         <Text style={styles.buttonText}>{audioPlaying ? "Playing..." : "Play Again"}</Text>
       </TouchableOpacity>
       <Text style={styles.instruction}>
@@ -209,11 +210,11 @@ function PuzzleScreen({ navigation }) {
           </TouchableOpacity>
         ))}
       </View>
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Submit</Text>
+      <TouchableOpacity style={[styles.button, {width: "90%", paddingVertical: 20, }]} onPress={handleSubmit}>
+        <Text style={[styles.buttonText, {fontSize: 25, fontWeight: "bold"}]}>Submit</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={resetPuzzle}>
-        <Text style={styles.buttonText}>Reset</Text>
+      <TouchableOpacity style={[{}]} onPress={resetPuzzle}>
+        <Text style={[styles.buttonText, {color: "blue", textDecorationLine: "underline"}]}>Reset</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -245,7 +246,7 @@ export default function LetterPuzzleAppWrapper({ navigation }) {
   if (!isLoaded) {
     return (
       <SafeAreaView style={styles.loadingFallbackContainer}>
-        <ActivityIndicator size="large" color="#72C99F" />
+        <ActivityIndicator size="large" color="white" />
         <Text style={styles.loadingText}>Loading...</Text>
       </SafeAreaView>
     );
@@ -278,14 +279,16 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: "#72C99F",
+    // color: "#72C99F",
+    color: "white",
     marginTop: 10,
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    // justifyContent: "space-between",
     alignItems: "center",
     width: "100%",
+    marginTop: 30,
     marginBottom: 20,
   },
   homeText: {
@@ -294,9 +297,13 @@ const styles = StyleSheet.create({
     color: "#72C99F",
   },
   moduleTitle: {
-    fontSize: 22,
+    fontSize: 25,
     fontWeight: "bold",
     color: "#000",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 58
+    
   },
   title: {
     fontSize: 28,
