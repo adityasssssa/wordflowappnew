@@ -110,7 +110,7 @@ export default function HomeScreen({ navigation }) {
             style={styles.appIcon}
             resizeMode="contain"
           />
-          <Text style={styles.appLabel}>Audio quests</Text>
+          <Text style={styles.appLabel}>Audio Quests</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -122,7 +122,7 @@ export default function HomeScreen({ navigation }) {
             style={styles.appIcon}
             resizeMode="contain"
           />
-          <Text style={styles.appLabel}>Word wizards</Text>
+          <Text style={styles.appLabel}>Word Wizards</Text>
         </TouchableOpacity>
       </View>
 
@@ -151,7 +151,7 @@ export default function HomeScreen({ navigation }) {
             style={styles.appIcon}
             resizeMode="contain"
           />
-          <Text style={styles.appLabel}>Alphabet arcade</Text>
+          <Text style={styles.appLabel}>Alphabet Arcade</Text>
         </TouchableOpacity>
       </View>
 

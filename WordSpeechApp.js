@@ -18,7 +18,6 @@ const REV_AI_ACCESS_TOKEN = "02Zmaws-lBJjwJTmw8_k5LxfNL-coIIgiDKstyFkuD7giZmCb8W
 
 const sentencesByDifficulty = {
   easy: [
-    // "The brown horse jumps over the fence.",
     "The sun is hot.",
     "She has a red hat."
   ],
@@ -45,6 +44,15 @@ export default function WordSpeechApp({ navigation }) {
     'OpenDyslexic': require('./assets/fonts/OpenDyslexic-Regular.otf'),
     NerkoOne_400Regular,
   });
+
+  // New loading state (simulate a 3-second loading delay)
+  const [isLoaded, setIsLoaded] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // All other hooks are always called unconditionally.
   const [currentScreen, setCurrentScreen] = useState("record");
@@ -317,6 +325,16 @@ export default function WordSpeechApp({ navigation }) {
     }
   };
 
+  // Use the HomeworkHelperApp loading screen component
+  if (!isLoaded || !fontsLoaded) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="white" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
+
   // Render UI based on currentScreen state.
   const renderContent = () => {
     if (currentScreen === "finalEnd") {
@@ -413,15 +431,6 @@ export default function WordSpeechApp({ navigation }) {
     }
   };
 
-  // Render fallback if fonts not loaded. (All hooks are already called.)
-  if (!fontsLoaded) {
-    return (
-      <SafeAreaView style={styles.loadingFallbackContainer}>
-        <ActivityIndicator size="large" color="white" />
-      </SafeAreaView>
-    );
-  }
-
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       {renderContent()}
@@ -445,27 +454,28 @@ const styles = StyleSheet.create({
   middleSection: {
     flex: 1,
     marginTop: 150,
-    // marginBottom: 100,
-    // alignItems: "center",
-    // justifyContent: "center",
     paddingHorizontal: 20,
-
   },
   bottomSection: {
     alignItems: "center",
     marginTop: 40,
     marginBottom: 20,
   },
-  loadingFallbackContainer: {
+  loadingContainer: {
     flex: 1,
     backgroundColor: "#B3D8FF",
     alignItems: "center",
     justifyContent: "center",
   },
+  loadingText: {
+    fontSize: 16,
+    color: "white",
+    marginTop: 10,
+  },
   logoText: {
     fontFamily: 'NerkoOne_400Regular',
     fontSize: 50,
-    color: "#FDEB56", // bright yellow
+    color: "#FDEB56",
     fontWeight: "bold",
     marginVertical: 10,
   },
@@ -510,8 +520,6 @@ const styles = StyleSheet.create({
     textAlign: "left",
     marginTop: 20,
     overflow: "visible"
-    // flexWrap: ""
-    // marginBottom: 0,
   },
   sentenceContainer: {
     flexDirection: "row",
@@ -536,9 +544,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     borderRadius: 13,
     width: "80%",
-    // minWidth: 200,
     alignItems: "center",
-    // marginBottom: 0,
   },
   recordButtonText: {
     color: "#fff",

@@ -15,6 +15,7 @@ import * as Font from 'expo-font';
 import { Audio } from 'expo-av';
 import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useFonts, NerkoOne_400Regular } from '@expo-google-fonts/nerko-one';
 const Stack = createStackNavigator();
 
 const questions = [
@@ -54,20 +55,23 @@ const shuffleArray = (array) => {
   return arr;
 };
 
-// Custom Header with "Home" on the left and "Word Wizards" on the right
-const CustomHeader = ({ navigation }) => (
+// CustomHeader now accepts a "showBack" prop.
+// When true, it displays the back button; when false, it does not.
+const CustomHeader = ({ navigation, showBack = true }) => (
   <View style={styles.header}>
-    <TouchableOpacity
-      onPress={() => {
-        if (navigation && navigation.navigate) {
-          navigation.goBack();
-        }
-      }}
-    >
-      {/* <Text style={styles.homeText}>Go to Home</Text> */}
-      <Ionicons name="arrow-back-circle-outline" size={38} color="grey" />
-    </TouchableOpacity>
-    <Text style={styles.moduleTitle}>Alphabet Arcade!</Text>
+    {showBack && (
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={styles.backIconContainer}
+      >
+        <Ionicons name="arrow-back-circle-outline" size={38} color="grey" />
+      </TouchableOpacity>
+    )}
+    <View style={styles.headerTitleContainer}>
+      <Text style={styles.headerTitle}>Dyslexia Pal</Text>
+    </View>
+    {/* Placeholder to balance the layout when back button is shown */}
+    {showBack && <View style={styles.headerRightPlaceholder} />}
   </View>
 );
 
@@ -187,9 +191,9 @@ function PuzzleScreen({ navigation }) {
 
   return (
     <ScrollView contentContainerStyle={styles.containerNoScroll}>
-      <CustomHeader navigation={navigation} />
+      <CustomHeader navigation={navigation} showBack={true} />
       <Image source={currentQuestion.image} style={styles.image} />
-      <TouchableOpacity style={[styles.button, {backgroundColor: "grey", borderRadius: 30}]} onPress={playAudio}>
+      <TouchableOpacity style={[styles.button, { backgroundColor: "grey", borderRadius: 30 }]} onPress={playAudio}>
         <Text style={styles.buttonText}>{audioPlaying ? "Playing..." : "Play Again"}</Text>
       </TouchableOpacity>
       <Text style={styles.instruction}>
@@ -210,11 +214,11 @@ function PuzzleScreen({ navigation }) {
           </TouchableOpacity>
         ))}
       </View>
-      <TouchableOpacity style={[styles.button, {width: "90%", paddingVertical: 20, }]} onPress={handleSubmit}>
-        <Text style={[styles.buttonText, {fontSize: 25, fontWeight: "bold"}]}>Submit</Text>
+      <TouchableOpacity style={[styles.button, { width: "90%", paddingVertical: 20 }]} onPress={handleSubmit}>
+        <Text style={[styles.buttonText, { fontSize: 25, fontWeight: "bold" }]}>Submit</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[{}]} onPress={resetPuzzle}>
-        <Text style={[styles.buttonText, {color: "blue", textDecorationLine: "underline"}]}>Reset</Text>
+      <TouchableOpacity onPress={resetPuzzle}>
+        <Text style={[styles.buttonText, { color: "blue", textDecorationLine: "underline" }]}>Reset</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -225,10 +229,17 @@ function ScoreScreen({ route, navigation }) {
   const percentage = ((correct / total) * 100).toFixed(0);
   return (
     <View style={styles.container}>
-      <CustomHeader navigation={navigation} />
-      <Text style={styles.title}>Good Job!</Text>
+      {/* Do not show back button on end screen */}
+      <CustomHeader navigation={navigation} showBack={false} />
+      <Text style={styles.title}>Test Complete</Text>
       <Text style={styles.scoreText}>Correct: {correct} out of {total}</Text>
       <Text style={styles.scoreText}>Score: {percentage}%</Text>
+      <TouchableOpacity
+        style={[styles.button, { width: "90%", paddingVertical: 20, backgroundColor: "#FF6347", marginTop: 20 }]}
+        onPress={() => navigation.navigate("Home")}
+      >
+        <Text style={[styles.buttonText, { fontSize: 25, fontWeight: "bold" }]}>Back to Home</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -239,7 +250,7 @@ export default function LetterPuzzleAppWrapper({ navigation }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
-    }, 3000);
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -279,31 +290,41 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    // color: "#72C99F",
     color: "white",
     marginTop: 10,
   },
   header: {
     flexDirection: "row",
-    // justifyContent: "space-between",
     alignItems: "center",
     width: "100%",
     marginTop: 30,
     marginBottom: 20,
   },
-  homeText: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#72C99F",
-  },
-  moduleTitle: {
-    fontSize: 25,
-    fontWeight: "bold",
-    color: "#000",
+  backIconContainer: {
+    width: 38,
+    height: 38,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 58
-    
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
+  headerRightPlaceholder: {
+    width: 38,
+  },
+  headerTitle: {
+    fontSize: 40, // Updated font size to 40
+    fontWeight: "bold",
+    color: "#FDEB56", // Yellow color
+    fontFamily: "NerkoOne_400Regular",
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#B3D8FF",
+    alignItems: "center",
+    padding: 20,
+    paddingTop: 40,
   },
   title: {
     fontSize: 28,
