@@ -112,7 +112,7 @@ export default function WordSpeechApp({ navigation }) {
 
   // Display "WordFlow" as a logo text using Nerko One font
   const LogoText = () => (
-    <Text style={styles.logoText}>WordFlow</Text>
+    <Text style={styles.logoText}>Dyslexia Pal</Text>
   );
 
   const normalizeText = (text) => {

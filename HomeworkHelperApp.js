@@ -54,7 +54,7 @@ export default function HomeworkHelperApp({ navigation }) {
       <TouchableOpacity onPress={() => navigation.dispatch(StackActions.popToTop())}>
         <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
-      <Text style={styles.headerTitle}>Wordflow</Text>
+      <Text style={styles.headerTitle}>Dyslexia Pal</Text>
       <View style={{ width: 60 }} />
     </View>
   );

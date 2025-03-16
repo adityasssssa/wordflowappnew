@@ -61,7 +61,7 @@ export default function App() {
     return (
       <View style={styles.splashContainer}>
         {/* Wordflow logo using Nerko One */}
-        <Text style={styles.splashTitle}>Wordflow</Text>
+        <Text style={styles.splashTitle}>Dyslexia Pal</Text>
         {/* Subtitle */}
         <Text style={styles.splashSubtitle}>Dyslexia is your superpower!</Text>
         {/* Larger flowers image */}

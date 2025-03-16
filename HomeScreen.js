@@ -83,7 +83,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Wordflow</Text>
+      <Text style={styles.title}>Dyslexia Pal</Text>
 
       <View style={styles.goalBox}>
         <View style={styles.goalBoxTopRow}>
