@@ -96,7 +96,7 @@ export default function WordSpeechApp({ navigation }) {
         <TouchableOpacity
           onPress={() => {
             if(navigation && navigation.navigate) {
-              navigation.navigate("Home");
+              navigation.goBack();
             }
           }}
         >
