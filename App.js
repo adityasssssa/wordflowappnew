@@ -1,5 +1,5 @@
 // App.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext } from 'react';
 import { 
   StyleSheet, 
   View, 
@@ -12,17 +12,25 @@ import HomeScreen from './HomeScreen';
 import WordSpeechApp from './WordSpeechApp';
 import LetterPuzzleApp from './LetterPuzzleApp';
 import HomeworkHelperApp from './HomeworkHelperApp';
-
-// Import Nerko One font
 import { useFonts, NerkoOne_400Regular } from '@expo-google-fonts/nerko-one';
+
+// Create a FontContext to share the dyslexic mode state
+export const FontContext = createContext();
 
 const Stack = createStackNavigator();
 const SPLASH_DURATION_MS = 3000;
 
 export default function App() {
-  // Load NerkoOne font
+  // Global state for toggling font mode
+  const [useDyslexic, setUseDyslexic] = useState(false);
+  const toggleFont = () => {
+    setUseDyslexic(prev => !prev);
+  };
+
+  // Load fonts: both NerkoOne and OpenDyslexic
   let [fontsLoaded] = useFonts({
     NerkoOne_400Regular,
+    OpenDyslexic: require('./assets/fonts/OpenDyslexic-Regular.otf'),
   });
 
   const [animatedText, setAnimatedText] = useState("LOGGING YOU IN");
@@ -52,7 +60,7 @@ export default function App() {
     };
   }, []);
 
-  // Wait for fonts to load (if not loaded yet, show nothing or an ActivityIndicator)
+  // Wait for fonts to load
   if (!fontsLoaded) {
     return null;
   }
@@ -60,31 +68,39 @@ export default function App() {
   if (showSplash) {
     return (
       <View style={styles.splashContainer}>
-        {/* Wordflow logo using Nerko One */}
-        <Text style={styles.splashTitle}>Dyslexia Pal</Text>
+        {/* Logo text using original NerkoOne font for "Dyslexia Pal" */}
+        <Text style={styles.splashTitle}>
+          Dyslexia Pal
+        </Text>
         {/* Subtitle */}
-        <Text style={styles.splashSubtitle}>Dyslexia is your superpower!</Text>
-        {/* Larger flowers image */}
+        <Text style={[styles.splashSubtitle, useDyslexic && { fontFamily: 'OpenDyslexic' }]}>
+          Dyslexia is your superpower!
+        </Text>
+        {/* Image */}
         <Image
           source={require('./assets/logos/flowers.png')}
           style={styles.splashFlowers}
           resizeMode="contain"
         />
         {/* Animated text */}
-        <Text style={styles.splashAnimated}>{animatedText}</Text>
+        <Text style={[styles.splashAnimated, useDyslexic && { fontFamily: 'OpenDyslexic' }]}>
+          {animatedText}
+        </Text>
       </View>
     );
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="WordSpeech" component={WordSpeechApp} />
-        <Stack.Screen name="LetterPuzzle" component={LetterPuzzleApp} />
-        <Stack.Screen name="HomeworkHelper" component={HomeworkHelperApp} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <FontContext.Provider value={{ useDyslexic, toggleFont }}>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="WordSpeech" component={WordSpeechApp} />
+          <Stack.Screen name="LetterPuzzle" component={LetterPuzzleApp} />
+          <Stack.Screen name="HomeworkHelper" component={HomeworkHelperApp} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </FontContext.Provider>
   );
 }
 
@@ -98,7 +114,7 @@ const styles = StyleSheet.create({
   },
   splashTitle: {
     fontFamily: 'NerkoOne_400Regular',
-    fontSize: 64, // bigger logo
+    fontSize: 64,
     color: "#fff",
     fontWeight: "bold",
     marginBottom: 10,

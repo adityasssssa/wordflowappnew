@@ -1,5 +1,5 @@
 // HomeScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -11,8 +11,8 @@ import {
   ActivityIndicator 
 } from 'react-native';
 import { useFonts, NerkoOne_400Regular } from '@expo-google-fonts/nerko-one';
-import AppLoading from 'expo-app-loading';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FontContext } from './App';
 
 const DEFAULT_GOAL = "I want to learn 3 new skills and get to level 4 of word blocks!!!!!";
 const QUOTES = [
@@ -31,6 +31,12 @@ const QUOTES = [
 export default function HomeScreen({ navigation }) {
   const [goal, setGoal] = useState("");
   const [quote, setQuote] = useState("");
+
+  // Get the font toggle state and function from context
+  const { useDyslexic, toggleFont } = useContext(FontContext);
+
+  // Updated scaling factor: 0.76 reduces dyslexic mode text sizes a couple points smaller
+  const dyslexicScale = 0.76;
 
   const [fontsLoaded] = useFonts({
     NerkoOne_400Regular,
@@ -83,20 +89,51 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Dyslexia Pal</Text>
+      {/* Title */}
+      <Text style={styles.title}>
+        Dyslexia Pal
+      </Text>
+
+      {/* Toggle button repositioned right below the title with smoothed edges */}
+      <TouchableOpacity style={styles.toggleButton} onPress={toggleFont}>
+        <Text style={[styles.toggleButtonText, useDyslexic && { fontFamily: 'OpenDyslexic' }]}>
+          {useDyslexic ? "Disable OpenDyslexic" : "Enable OpenDyslexic"}
+        </Text>
+      </TouchableOpacity>
 
       <View style={styles.goalBox}>
         <View style={styles.goalBoxTopRow}>
-          <Text style={styles.goalBoxTitle}>My goal is</Text>
+          <Text 
+            style={[
+              styles.goalBoxTitle, 
+              useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 24 * dyslexicScale }
+            ]}
+          >
+            My goal is
+          </Text>
           <Image
             source={require('./assets/logos/target.png')}
             style={styles.targetIcon}
             resizeMode="contain"
           />
         </View>
-        <Text style={styles.goalText}>{goal}</Text>
+        <Text 
+          style={[
+            styles.goalText, 
+            useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 16 * dyslexicScale }
+          ]}
+        >
+          {goal}
+        </Text>
         <TouchableOpacity onPress={handleChangeGoal}>
-          <Text style={styles.changeLink}>Change</Text>
+          <Text 
+            style={[
+              styles.changeLink, 
+              useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 14 * dyslexicScale }
+            ]}
+          >
+            Change
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -110,7 +147,11 @@ export default function HomeScreen({ navigation }) {
             style={styles.appIcon}
             resizeMode="contain"
           />
-          <Text style={styles.appLabel}>Audio Quests</Text>
+          <Text 
+            style={[styles.appLabel, useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 16 * dyslexicScale }]}
+          >
+            Audio Quests
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -122,7 +163,11 @@ export default function HomeScreen({ navigation }) {
             style={styles.appIcon}
             resizeMode="contain"
           />
-          <Text style={styles.appLabel}>Word Wizards</Text>
+          <Text 
+            style={[styles.appLabel, useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 16 * dyslexicScale }]}
+          >
+            Word Wizards
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -136,27 +181,40 @@ export default function HomeScreen({ navigation }) {
             style={styles.appIcon}
             resizeMode="contain"
           />
-          <Text style={styles.appLabel}>Homework Reader</Text>
+          <Text 
+            style={[styles.appLabel, useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 16 * dyslexicScale }]}
+          >
+            Homework Reader
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
           style={[styles.appBox, { backgroundColor: "#D5F4E5" }]}
-          onPress={() => {
-            // console.warn("Alphabet Arcade button pressed, but no action is defined.");
-            navigation.push("LetterPuzzle")
-          }}
+          onPress={() => navigation.push("LetterPuzzle")}
         >
           <Image
             source={require('./assets/logos/blocks.png')}
             style={styles.appIcon}
             resizeMode="contain"
           />
-          <Text style={styles.appLabel}>Alphabet Arcade</Text>
+          <Text 
+            style={[styles.appLabel, useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 16 * dyslexicScale }]}
+          >
+            Alphabet Arcade
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.empowerText}>Empower yourself!</Text>
-      <Text style={styles.quoteText}>{quote}</Text>
+      <Text 
+        style={[styles.empowerText, useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 33 * dyslexicScale }]}
+      >
+        Empower yourself!
+      </Text>
+      <Text 
+        style={[styles.quoteText, useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 16 * dyslexicScale }]}
+      >
+        {quote}
+      </Text>
     </SafeAreaView>
   );
 }
@@ -170,10 +228,22 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: "NerkoOne_400Regular",
-    fontSize: 50,
+    fontSize: 50, // Regular title size
     color: "#FDEB56",
     marginTop: 10,
+    marginBottom: 5,
+  },
+  toggleButton: {
+    alignSelf: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: "#72C99F",
+    borderRadius: 20, // Increased border radius for smoother edges
     marginBottom: 15,
+  },
+  toggleButtonText: {
+    fontSize: 14,
+    color: "#fff",
   },
   goalBox: {
     width: "90%",
@@ -233,12 +303,12 @@ const styles = StyleSheet.create({
   },
   empowerText: {
     fontFamily: "NerkoOne_400Regular",
-    fontSize: 33,
+    fontSize: 33, // Regular empower text size
     color: "#FDEB56",
     marginTop: 10,
   },
   quoteText: {
-    fontSize: 16,
+    fontSize: 16, // Regular quote text size
     color: "#000",
     marginTop: 5,
     textAlign: "center",

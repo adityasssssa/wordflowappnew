@@ -1,5 +1,5 @@
 // WordSpeechApp.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -13,6 +13,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import * as Font from 'expo-font';
 import { Audio } from 'expo-av';
 import { useFonts, NerkoOne_400Regular } from '@expo-google-fonts/nerko-one';
+import { FontContext } from './App';
 
 const REV_AI_ACCESS_TOKEN = "02Zmaws-lBJjwJTmw8_k5LxfNL-coIIgiDKstyFkuD7giZmCb8Wv2Tg0A6ahovKj7zJjy8bLRnExL-4yeHSjSCVuaYq8o";
 
@@ -39,13 +40,38 @@ const difficultyColors = {
 };
 
 export default function WordSpeechApp({ navigation }) {
-  // Always call the font hook at the top.
+  const { useDyslexic } = useContext(FontContext);
+
+  // Local Hint Toggle (for sentence text only) and counter logic
+  const [hintActive, setHintActive] = useState(false);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  // Tracks if a hint has been used for the current question (only one count per question)
+  const [hintUsedForCurrentQuestion, setHintUsedForCurrentQuestion] = useState(false);
+
+  const hintLabel = hintActive ? "Hint Shown" : "Hint";
+  const toggleHint = () => {
+    // If hint not used yet for this question, count it and mark it as used.
+    if (!hintUsedForCurrentQuestion) {
+      setHintsUsed(prev => prev + 1);
+      setHintUsedForCurrentQuestion(true);
+    }
+    setHintActive(!hintActive);
+  };
+
+  // Reset hint-used flag whenever the question changes.
+  useEffect(() => {
+    setHintUsedForCurrentQuestion(false);
+  }, [currentSentence]);
+
+  // Scaling factor for dyslexic mode text sizes
+  const dyslexicScale = 0.76;
+
+  // Load both fonts: NerkoOne and OpenDyslexic
   let [fontsLoaded] = useFonts({
     'OpenDyslexic': require('./assets/fonts/OpenDyslexic-Regular.otf'),
     NerkoOne_400Regular,
   });
 
-  // New loading state (simulate a 3-second loading delay)
   const [isLoaded, setIsLoaded] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -54,7 +80,6 @@ export default function WordSpeechApp({ navigation }) {
     return () => clearTimeout(timer);
   }, []);
 
-  // All other hooks are always called unconditionally.
   const [currentScreen, setCurrentScreen] = useState("record");
   const [currentDifficultyIndex, setCurrentDifficultyIndex] = useState(0);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
@@ -71,7 +96,6 @@ export default function WordSpeechApp({ navigation }) {
   const [isPolling, setIsPolling] = useState(false);
   const [transcript, setTranscript] = useState("");
 
-  // Set audio mode
   useEffect(() => {
     Audio.setAudioModeAsync({
       allowsRecordingIOS: true,
@@ -79,7 +103,6 @@ export default function WordSpeechApp({ navigation }) {
     });
   }, []);
 
-  // Initialize adaptive mode on mount
   useEffect(() => {
     startAdaptiveMode();
   }, []);
@@ -94,9 +117,10 @@ export default function WordSpeechApp({ navigation }) {
     const diff = difficulties[0];
     setCurrentSentence(sentencesByDifficulty[diff][0]);
     setCurrentScreen("record");
+    setHintActive(false);
   };
 
-  // Header Bar with Back button on left, "Audio Quests" center, difficulty on right.
+  // Header Bar with Back button, title ("Audio Quests"), and difficulty indicator
   const HeaderBar = () => {
     const difficulty = difficulties[currentDifficultyIndex];
     return (
@@ -108,19 +132,35 @@ export default function WordSpeechApp({ navigation }) {
             }
           }}
         >
-          <Text style={styles.backText}>Back</Text>
+          <Text style={[
+            styles.backText, 
+            useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 22 * dyslexicScale }
+          ]}>
+            Back
+          </Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Audio Quests</Text>
-        <Text style={[styles.difficultyText, { color: difficultyColors[difficulty] }]}>
+        <Text style={[
+          styles.headerTitle, 
+          useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 25 * dyslexicScale }
+        ]}>
+          Audio Quests
+        </Text>
+        <Text style={[
+          styles.difficultyText, 
+          { color: difficultyColors[difficulty] },
+          useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 18 * dyslexicScale }
+        ]}>
           {difficulty.toUpperCase()}
         </Text>
       </View>
     );
   };
 
-  // Display "WordFlow" as a logo text using Nerko One font
+  // Logo Text: ALWAYS uses NerkoOne, regardless of the toggle.
   const LogoText = () => (
-    <Text style={styles.logoText}>Dyslexia Pal</Text>
+    <Text style={styles.logoText}>
+      Dyslexia Pal
+    </Text>
   );
 
   const normalizeText = (text) => {
@@ -160,7 +200,6 @@ export default function WordSpeechApp({ navigation }) {
     }
   };
 
-  // Upload recording using previous logic, checking for job ID.
   const uploadRecording = async (uri) => {
     setIsUploading(true);
     let formData = new FormData();
@@ -294,6 +333,8 @@ export default function WordSpeechApp({ navigation }) {
   };
 
   const moveToNextDifficulty = () => {
+    // Reset hint-used flag for new question
+    setHintUsedForCurrentQuestion(false);
     const nextDiffIndex = currentDifficultyIndex + 1;
     if (nextDiffIndex < difficulties.length) {
       setCurrentDifficultyIndex(nextDiffIndex);
@@ -320,22 +361,29 @@ export default function WordSpeechApp({ navigation }) {
     setRecording(null);
     setRecordingUri(null);
     setTranscript("");
+    setHintActive(false);
     if (navigation && navigation.navigate) {
       navigation.navigate("Home");
     }
   };
 
-  // Use the HomeworkHelperApp loading screen component
   if (!isLoaded || !fontsLoaded) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="white" />
-        <Text style={styles.loadingText}>Loading...</Text>
+        <Text style={[
+          styles.loadingText,
+          useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 16 * dyslexicScale }
+        ]}>
+          Loading...
+        </Text>
       </SafeAreaView>
     );
   }
 
-  // Render UI based on currentScreen state.
+  // Use OpenDyslexic font for sentence text when hint is active; otherwise default.
+  const sentenceFont = hintActive ? { fontFamily: 'OpenDyslexic' } : null;
+
   const renderContent = () => {
     if (currentScreen === "finalEnd") {
       return (
@@ -345,15 +393,34 @@ export default function WordSpeechApp({ navigation }) {
             <HeaderBar />
           </View>
           <View style={styles.middleSection}>
-            <Text style={styles.finalEndTitle}>All Done!</Text>
-            <Text style={styles.endScoreText}>
+            <Text style={[
+              styles.finalEndTitle,
+              useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 28 * dyslexicScale }
+            ]}>
+              All Done!
+            </Text>
+            <Text style={[
+              styles.endScoreText,
+              useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 20 * dyslexicScale }
+            ]}>
               You got {firstTryCount} sentence{firstTryCount !== 1 ? "s" : ""} correct on the first try{"\n"}
               and took {totalRetries} {totalRetries === 1 ? "Retry" : "Retries"} in total.
+            </Text>
+            <Text style={[
+              styles.hintScoreText,
+              useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 20 * dyslexicScale }
+            ]}>
+              {hintsUsed} {hintsUsed === 1 ? "hint used." : "hints used."}
             </Text>
           </View>
           <View style={styles.bottomSection}>
             <TouchableOpacity style={styles.recordButton} onPress={resetAll}>
-              <Text style={styles.recordButtonText}>Home</Text>
+              <Text style={[
+                styles.recordButtonText,
+                useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 25 * dyslexicScale }
+              ]}>
+                Home
+              </Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -366,14 +433,21 @@ export default function WordSpeechApp({ navigation }) {
             <HeaderBar />
           </View>
           <View style={styles.middleSection}>
-            <Text style={styles.readSentenceText}>Repeat the missed words:</Text>
+            <Text style={[
+              styles.readSentenceText,
+              useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 30 * dyslexicScale }
+            ]}>
+              Repeat the missed words:
+            </Text>
             <View style={styles.sentenceContainer}>
               {repeatWords.map((obj, index) => (
                 <Text
                   key={index}
                   style={[
                     styles.word,
-                    obj.correct ? styles.correctWord : styles.incorrectWord
+                    hintActive && { fontFamily: 'OpenDyslexic' },
+                    obj.correct ? styles.correctWord : styles.incorrectWord,
+                    useDyslexic && { fontSize: 36 * dyslexicScale }
                   ]}
                 >
                   {obj.word}
@@ -388,12 +462,32 @@ export default function WordSpeechApp({ navigation }) {
               onPressOut={onMicPressOut}
               disabled={isRecording}
             >
-              <Text style={styles.recordButtonText}>Hold to Record</Text>
+              <Text style={[
+                styles.recordButtonText,
+                useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 30 * dyslexicScale }
+              ]}>
+                Hold to Record
+              </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity style={styles.hintButton} onPress={toggleHint}>
+              <Text style={[
+                styles.hintButtonText,
+                useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 20 * dyslexicScale }
+              ]}>
+                {hintLabel}
+              </Text>
+            </TouchableOpacity>
+
             {(isUploading || isPolling) && (
               <View style={styles.checkingContainer}>
                 <ActivityIndicator size="large" color="#000" />
-                <Text style={styles.checkingText}>Checking...</Text>
+                <Text style={[
+                  styles.checkingText,
+                  useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 18 * dyslexicScale }
+                ]}>
+                  Checking...
+                </Text>
               </View>
             )}
           </View>
@@ -407,8 +501,15 @@ export default function WordSpeechApp({ navigation }) {
             <HeaderBar />
           </View>
           <View style={styles.middleSection}>
-            <Text style={styles.readSentenceText}>Read the sentence:</Text>
-            <Text style={styles.sentenceText}>{currentSentence}</Text>
+            <Text style={[
+              styles.readSentenceText,
+              useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 30 * dyslexicScale }
+            ]}>
+              Read the sentence:
+            </Text>
+            <Text style={[styles.sentenceText, sentenceFont]}>
+              {currentSentence}
+            </Text>
           </View>
           <View style={styles.bottomSection}>
             <TouchableOpacity
@@ -417,12 +518,32 @@ export default function WordSpeechApp({ navigation }) {
               onPressOut={onMicPressOut}
               disabled={isRecording}
             >
-              <Text style={styles.recordButtonText}>Hold to Record</Text>
+              <Text style={[
+                styles.recordButtonText,
+                useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 30 * dyslexicScale }
+              ]}>
+                Hold to Record
+              </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity style={styles.hintButton} onPress={toggleHint}>
+              <Text style={[
+                styles.hintButtonText,
+                useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 20 * dyslexicScale }
+              ]}>
+                {hintLabel}
+              </Text>
+            </TouchableOpacity>
+
             {(isUploading || isPolling) && (
               <View style={styles.checkingContainer}>
                 <ActivityIndicator size="large" color="#000" />
-                <Text style={styles.checkingText}>Checking...</Text>
+                <Text style={[
+                  styles.checkingText,
+                  useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 18 * dyslexicScale }
+                ]}>
+                  Checking...
+                </Text>
               </View>
             )}
           </View>
@@ -519,7 +640,7 @@ const styles = StyleSheet.create({
     color: "#000",
     textAlign: "left",
     marginTop: 20,
-    overflow: "visible"
+    overflow: "visible",
   },
   sentenceContainer: {
     flexDirection: "row",
@@ -540,7 +661,7 @@ const styles = StyleSheet.create({
   recordButton: {
     backgroundColor: "#72C99F",
     paddingVertical: 30,
-    marginBottom: 50,
+    marginBottom: 20,
     paddingHorizontal: 25,
     borderRadius: 13,
     width: "80%",
@@ -554,6 +675,7 @@ const styles = StyleSheet.create({
   checkingContainer: {
     flexDirection: "row",
     alignItems: "center",
+    marginTop: 10,
   },
   checkingText: {
     fontSize: 18,
@@ -571,6 +693,31 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginHorizontal: 20,
     color: "#000",
+    marginBottom: 10,
+  },
+  hintScoreText: {
+    fontSize: 20,
+    textAlign: "center",
+    marginHorizontal: 20,
+    color: "#000",
     marginBottom: 20,
+  },
+  backIconContainer: {
+    width: 38,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hintButton: {
+    backgroundColor: '#FFDD66',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  hintButtonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
   },
 });

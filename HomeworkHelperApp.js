@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+// HomeworkHelperApp.js
+import React, { useEffect, useState, useContext } from 'react';
 import {
   StyleSheet,
   Text,
@@ -14,8 +15,13 @@ import { StackActions } from '@react-navigation/native';
 import { useFonts, NerkoOne_400Regular } from '@expo-google-fonts/nerko-one';
 import * as Font from 'expo-font';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { FontContext } from './App';
 
 export default function HomeworkHelperApp({ navigation }) {
+  const { useDyslexic } = useContext(FontContext);
+  // Constant scaling factor for dyslexic mode text sizes
+  const dyslexicScale = 0.76;
+
   const [localFontLoaded, setLocalFontLoaded] = useState(false);
   let [fontsLoaded] = useFonts({
     NerkoOne_400Regular,
@@ -24,7 +30,7 @@ export default function HomeworkHelperApp({ navigation }) {
   const [ocrText, setOcrText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Load OpenDyslexic from local assets for OCR text
+  // Load OpenDyslexic from local assets for OCR text (always load it)
   useEffect(() => {
     (async () => {
       try {
@@ -48,7 +54,7 @@ export default function HomeworkHelperApp({ navigation }) {
     })();
   }, []);
 
-  // Simulate a loading screen for 3 seconds
+  // Simulate a loading screen for 1 second
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
@@ -60,11 +66,19 @@ export default function HomeworkHelperApp({ navigation }) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="white" />
-        <Text style={styles.loadingText}>Loading...</Text>
+        <Text
+          style={[
+            styles.loadingText,
+            useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 16 * dyslexicScale }
+          ]}
+        >
+          Loading...
+        </Text>
       </SafeAreaView>
     );
   }
 
+  // Header Bar with back button and title "Dyslexia Pal" using original NerkoOne font (no toggle)
   const HeaderBar = () => (
     <View style={styles.headerBar}>
       <TouchableOpacity
@@ -73,14 +87,23 @@ export default function HomeworkHelperApp({ navigation }) {
       >
         <Ionicons name="arrow-back-circle-outline" size={32} color="#888" />
       </TouchableOpacity>
-      <Text style={styles.headerTitle}>Dyslexia Pal</Text>
+      <Text style={styles.headerTitle}>
+        Dyslexia Pal
+      </Text>
       <View style={{ width: 45 }} />
     </View>
   );
 
   const HomeworkReaderBar = () => (
     <View style={styles.homeworkReaderBar}>
-      <Text style={styles.homeworkReaderText}>Homework Reader</Text>
+      <Text
+        style={[
+          styles.homeworkReaderText,
+          useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 22 * dyslexicScale }
+        ]}
+      >
+        Homework Reader
+      </Text>
     </View>
   );
 
@@ -133,21 +156,51 @@ export default function HomeworkHelperApp({ navigation }) {
       <HeaderBar />
       <HomeworkReaderBar />
       <ScrollView contentContainerStyle={styles.mainContent}>
-        <Text style={styles.helpText}>
+        <Text
+          style={[
+            styles.helpText,
+            useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 26 * dyslexicScale }
+          ]}
+        >
           Need help reading your homework? Click below!
         </Text>
         <TouchableOpacity style={styles.scannerButton} onPress={captureAndProcess}>
-          <Text style={styles.scannerButtonText}>Open Homework Scanner</Text>
+          <Text
+            style={[
+              styles.scannerButtonText,
+              useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 20 * dyslexicScale }
+            ]}
+          >
+            Open Homework Scanner
+          </Text>
         </TouchableOpacity>
         {isProcessing && (
           <View style={styles.processingContainer}>
             <ActivityIndicator size="large" color="#000" />
-            <Text style={styles.processingText}>Processing...</Text>
+            <Text
+              style={[
+                styles.processingText,
+                useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 16 * dyslexicScale }
+              ]}
+            >
+              Processing...
+            </Text>
           </View>
         )}
         {ocrText !== "" && (
           <View style={styles.resultContainer}>
-            <Text style={styles.scannedText}>{ocrText}</Text>
+            <Text
+              style={[
+                styles.scannedText,
+                {
+                  // For scanned text, toggle between fonts:
+                  fontFamily: useDyslexic ? 'OpenDyslexic' : 'NerkoOne_400Regular',
+                  fontSize: useDyslexic ? 16 * dyslexicScale : 16,
+                }
+              ]}
+            >
+              {ocrText}
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -192,7 +245,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'NerkoOne_400Regular',
-    fontSize: 40, // Increased font size to 40
+    fontSize: 40,
     color: "#FDEB56",
   },
 
@@ -261,8 +314,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   scannedText: {
-    fontFamily: 'OpenDyslexic',
-    fontSize: 16,
     color: "#000",
   },
 });

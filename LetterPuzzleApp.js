@@ -1,5 +1,5 @@
 // LetterPuzzleApp.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -16,6 +16,10 @@ import { Audio } from 'expo-av';
 import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFonts, NerkoOne_400Regular } from '@expo-google-fonts/nerko-one';
+import { FontContext } from './App';
+
+const dyslexicScale = 0.76;
+
 const Stack = createStackNavigator();
 
 const questions = [
@@ -46,44 +50,64 @@ const letterImageMapping = {
   w: require('./assets/letters/w.jpg'),
 };
 
-const shuffleArray = (array) => {
+function shuffleArray(array) {
   let arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+// Updated CustomHeader with fixed title font (always NerkoOne)
+const CustomHeader = ({ navigation, showBack = true }) => {
+  return (
+    <View style={styles.header}>
+      {showBack && (
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backIconContainer}
+        >
+          <Ionicons name="arrow-back-circle-outline" size={38} color="grey" />
+        </TouchableOpacity>
+      )}
+      <View style={styles.headerTitleContainer}>
+        <Text style={styles.headerTitle}>
+          Dyslexia Pal
+        </Text>
+      </View>
+      {showBack && <View style={styles.headerRightPlaceholder} />}
+    </View>
+  );
 };
 
-// CustomHeader now accepts a "showBack" prop.
-// When true, it displays the back button; when false, it does not.
-const CustomHeader = ({ navigation, showBack = true }) => (
-  <View style={styles.header}>
-    {showBack && (
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.backIconContainer}
-      >
-        <Ionicons name="arrow-back-circle-outline" size={38} color="grey" />
-      </TouchableOpacity>
-    )}
-    <View style={styles.headerTitleContainer}>
-      <Text style={styles.headerTitle}>Dyslexia Pal</Text>
-    </View>
-    {/* Placeholder to balance the layout when back button is shown */}
-    {showBack && <View style={styles.headerRightPlaceholder} />}
-  </View>
-);
-
 function PuzzleScreen({ navigation }) {
+  const { useDyslexic } = useContext(FontContext);
+
+  // Hint toggle and counter state (only one hint counted per question)
+  const [hintActive, setHintActive] = useState(false);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [hintUsedForCurrentQuestion, setHintUsedForCurrentQuestion] = useState(false);
+  const hintButtonLabel = hintActive ? "Hint Shown" : "Hint";
+  const handleHint = () => {
+    if (!hintUsedForCurrentQuestion) {
+      setHintsUsed(prev => prev + 1);
+      setHintUsedForCurrentQuestion(true);
+    }
+    setHintActive(!hintActive);
+  };
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const currentQuestion = questions[currentQuestionIndex];
   const targetWord = currentQuestion.answer;
   const letters = targetWord.split("");
+
   const [availableLetters, setAvailableLetters] = useState(shuffleArray(letters));
   const [dropZones, setDropZones] = useState(new Array(targetWord.length).fill(""));
+
   const [firstAttemptCorrect, setFirstAttemptCorrect] = useState(null);
   const [firstAttemptScore, setFirstAttemptScore] = useState(0);
+
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [sound, setSound] = useState(null);
 
@@ -98,9 +122,8 @@ function PuzzleScreen({ navigation }) {
 
   useEffect(() => {
     Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
       allowsRecordingIOS: false,
-      staysActiveInBackground: false,
+      playsInSilentModeIOS: true,
     });
   }, []);
 
@@ -108,6 +131,8 @@ function PuzzleScreen({ navigation }) {
     playAudio();
     resetPuzzle();
     setFirstAttemptCorrect(null);
+    setHintActive(false);
+    setHintUsedForCurrentQuestion(false);
   }, [currentQuestionIndex]);
 
   const playAudio = async () => {
@@ -166,9 +191,11 @@ function PuzzleScreen({ navigation }) {
       }
     } else {
       if (formedWord === targetWord) {
-        Alert.alert("Correct", "Your answer is now correct, but your first attempt was marked incorrect.", [
-          { text: "OK", onPress: () => nextQuestion(firstAttemptScore) }
-        ]);
+        Alert.alert(
+          "Correct",
+          "Your answer is now correct, but your first attempt was marked incorrect.",
+          [{ text: "OK", onPress: () => nextQuestion(firstAttemptScore) }]
+        );
       } else {
         Alert.alert("Incorrect", "Your answer is incorrect. Please try again.");
       }
@@ -185,28 +212,67 @@ function PuzzleScreen({ navigation }) {
     if (nextIndex < questions.length) {
       setCurrentQuestionIndex(nextIndex);
     } else {
-      navigation.navigate("Score", { correct: updatedScore, total: questions.length });
+      navigation.navigate("Score", { correct: updatedScore, total: questions.length, hintsUsed: hintsUsed });
     }
   };
+
+  // The puzzle letters default to system font. If hintActive is true, use OpenDyslexic.
+  const puzzleLetterFont = hintActive ? { fontFamily: 'OpenDyslexic' } : null;
 
   return (
     <ScrollView contentContainerStyle={styles.containerNoScroll}>
       <CustomHeader navigation={navigation} showBack={true} />
+
       <Image source={currentQuestion.image} style={styles.image} />
-      <TouchableOpacity style={[styles.button, { backgroundColor: "grey", borderRadius: 30 }]} onPress={playAudio}>
-        <Text style={styles.buttonText}>{audioPlaying ? "Playing..." : "Play Again"}</Text>
-      </TouchableOpacity>
-      <Text style={styles.instruction}>
+
+      <View style={styles.playAgainHintRow}>
+        <TouchableOpacity 
+          style={[styles.button, styles.playAgainButton]} 
+          onPress={playAudio}
+        >
+          <Text style={[
+            styles.buttonText, 
+            useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 20 * dyslexicScale }
+          ]}>
+            {audioPlaying ? "Playing..." : "Play Again"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.hintButton}
+          onPress={handleHint}
+        >
+          <Text style={[
+            styles.hintButtonText,
+            useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 20 * dyslexicScale }
+          ]}>
+            {hintButtonLabel}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={[
+        styles.instruction, 
+        useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 18 * dyslexicScale }
+      ]}>
         Tap a letter to automatically place it in the next available box.
         Tap a filled box to remove its letter.
       </Text>
+
       <View style={styles.dropZoneContainer}>
         {dropZones.map((letter, index) => (
-          <TouchableOpacity key={`dropzone-${index}`} style={styles.dropZone} onPress={() => handleDropZoneTap(index)}>
-            <Text style={styles.dropZoneText}>{letter ? letter.toUpperCase() : ""}</Text>
+          <TouchableOpacity
+            key={`dropzone-${index}`}
+            style={styles.dropZone}
+            onPress={() => handleDropZoneTap(index)}
+          >
+            <Text style={[styles.dropZoneText, puzzleLetterFont]}>
+              {letter ? letter.toUpperCase() : ""}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
+
       <View style={styles.draggableContainer}>
         {availableLetters.map((letter, index) => (
           <TouchableOpacity key={`tile-${index}`} style={styles.draggable} onPress={() => handleTileTap(letter)}>
@@ -214,39 +280,76 @@ function PuzzleScreen({ navigation }) {
           </TouchableOpacity>
         ))}
       </View>
-      <TouchableOpacity style={[styles.button, { width: "90%", paddingVertical: 20 }]} onPress={handleSubmit}>
-        <Text style={[styles.buttonText, { fontSize: 25, fontWeight: "bold" }]}>Submit</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={resetPuzzle}>
-        <Text style={[styles.buttonText, { color: "blue", textDecorationLine: "underline" }]}>Reset</Text>
+
+      <TouchableOpacity 
+        style={[styles.button, { width: "90%", paddingVertical: 20 }]} 
+        onPress={handleSubmit}
+      >
+        <Text style={[
+          styles.buttonText, 
+          { fontSize: 25, fontWeight: "bold" }, 
+          useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 25 * dyslexicScale }
+        ]}>
+          Submit
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
+// Score screen: displays the score and the total hints used.
 function ScoreScreen({ route, navigation }) {
-  const { correct, total } = route.params;
+  const { useDyslexic } = useContext(FontContext);
+  const { correct, total, hintsUsed } = route.params;
   const percentage = ((correct / total) * 100).toFixed(0);
+
   return (
     <View style={styles.container}>
-      {/* Do not show back button on end screen */}
       <CustomHeader navigation={navigation} showBack={false} />
-      <Text style={styles.title}>Test Complete</Text>
-      <Text style={styles.scoreText}>Correct: {correct} out of {total}</Text>
-      <Text style={styles.scoreText}>Score: {percentage}%</Text>
+      <Text style={[
+        styles.title, 
+        useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 28 * dyslexicScale }
+      ]}>
+        Good Try!
+      </Text>
+      <Text style={[
+        styles.scoreText, 
+        useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 22 * dyslexicScale }
+      ]}>
+        Correct: {correct} out of {total}
+      </Text>
+      <Text style={[
+        styles.scoreText, 
+        useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 22 * dyslexicScale }
+      ]}>
+        Score: {percentage}%
+      </Text>
+      <Text style={[
+        styles.scoreText, 
+        useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 22 * dyslexicScale }
+      ]}>
+        {hintsUsed} {hintsUsed === 1 ? "hint used." : "hints used."}
+      </Text>
       <TouchableOpacity
-        style={[styles.button, { width: "90%", paddingVertical: 20, backgroundColor: "#FF6347", marginTop: 20 }]}
+        style={[styles.button, { width: "90%", paddingVertical: 20, backgroundColor: "#72C99F", marginTop: 20 }]}
         onPress={() => navigation.navigate("Home")}
       >
-        <Text style={[styles.buttonText, { fontSize: 25, fontWeight: "bold" }]}>Back to Home</Text>
+        <Text style={[
+          styles.buttonText, 
+          { fontSize: 25, fontWeight: "bold" },
+          useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 25 * dyslexicScale }
+        ]}>
+          Back to Home
+        </Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-// Loading wrapper for LetterPuzzleApp: wait 3 seconds before showing Navigator.
 export default function LetterPuzzleAppWrapper({ navigation }) {
+  const { useDyslexic } = useContext(FontContext);
   const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
@@ -258,7 +361,12 @@ export default function LetterPuzzleAppWrapper({ navigation }) {
     return (
       <SafeAreaView style={styles.loadingFallbackContainer}>
         <ActivityIndicator size="large" color="white" />
-        <Text style={styles.loadingText}>Loading...</Text>
+        <Text style={[
+          styles.loadingText,
+          useDyslexic && { fontFamily: 'OpenDyslexic', fontSize: 16 * dyslexicScale }
+        ]}>
+          Loading...
+        </Text>
       </SafeAreaView>
     );
   }
@@ -271,12 +379,15 @@ export default function LetterPuzzleAppWrapper({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-    backgroundColor: "#B3D8FF",
-  },
   containerNoScroll: {
     flexGrow: 1,
+    backgroundColor: "#B3D8FF",
+    alignItems: "center",
+    padding: 20,
+    paddingTop: 40,
+  },
+  container: {
+    flex: 1,
     backgroundColor: "#B3D8FF",
     alignItems: "center",
     padding: 20,
@@ -314,17 +425,10 @@ const styles = StyleSheet.create({
     width: 38,
   },
   headerTitle: {
-    fontSize: 40, // Updated font size to 40
+    fontSize: 40,
     fontWeight: "bold",
-    color: "#FDEB56", // Yellow color
+    color: "#FDEB56",
     fontFamily: "NerkoOne_400Regular",
-  },
-  container: {
-    flex: 1,
-    backgroundColor: "#B3D8FF",
-    alignItems: "center",
-    padding: 20,
-    paddingTop: 40,
   },
   title: {
     fontSize: 28,
@@ -364,20 +468,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginVertical: 20,
+    flexWrap: "wrap",
   },
   dropZone: {
     width: 50,
     height: 50,
     borderWidth: 1,
     borderColor: "#ccc",
-    marginHorizontal: 5,
+    margin: 4,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#f0f0f0",
   },
   dropZoneText: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: "bold", 
   },
   draggableContainer: {
     flexDirection: "row",
@@ -400,6 +505,20 @@ const styles = StyleSheet.create({
     height: 50,
     resizeMode: "contain",
   },
+  playAgainHintRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  playAgainButton: {
+    backgroundColor: "grey",
+    borderRadius: 30,
+    marginRight: 8,
+  },
+  hintButton: {
+    backgroundColor: '#FFDD66',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
 });
-
-export { LetterPuzzleAppWrapper as LetterPuzzleApp };
